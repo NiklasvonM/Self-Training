@@ -3,7 +3,7 @@ from typing import Literal
 import torch
 import torch.nn as nn
 from sklearn.metrics import accuracy_score
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import datasets, transforms
 
 from .cnn import CNN, train_model
@@ -26,7 +26,7 @@ def load_train_test_data() -> tuple[datasets.MNIST, datasets.MNIST]:
 class Experiment:
     full_train_dataset: datasets.MNIST
     train_subset_indices: torch.Tensor
-    train_subset: Subset
+    train_subset: Dataset
     test_loader: DataLoader
     confidence_threshold: float
     current_iteration: int
@@ -83,7 +83,7 @@ class Experiment:
         pseudo_labels = self._get_pseudo_labels(model, unlabeled_loader)
         # Add pseudo-labeled data to the training set based on confidence
         new_train_indices: list[int] = []
-        new_train_data = []
+        new_train_data: list[tuple[torch.Tensor, Digit]] = []
         for i, (pseudo_label, confidence) in enumerate(pseudo_labels):
             if confidence > self.confidence_threshold:
                 new_train_data.append((unlabeled_subset[i][0], pseudo_label))
@@ -143,6 +143,13 @@ class Experiment:
                 _, predicted = torch.max(output.data, 1)
                 test_predictions.extend(predicted.tolist())
                 test_true_labels.extend(target.tolist())
+        share_correct_train_labels = sum(
+            [
+                self.train_subset[index_train_subset][1]
+                == self.full_train_dataset[index_full_subset][1]
+                for index_train_subset, index_full_subset in enumerate(self.train_subset_indices)
+            ]
+        ) / len(self.train_subset_indices)
         metrics = MetricCollection(
             iteration=self.current_iteration,
             number_training_samples=len(self.train_subset_indices),
@@ -159,6 +166,7 @@ class Experiment:
             else None,
             low_confidence_count=len(low_confidence_predictions),
             test_accuracy=accuracy_score(test_true_labels, test_predictions),
+            share_correct_train_labels=share_correct_train_labels,
         )
         print(metrics)
         self.metrics.append(metrics)
