@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
 from .cnn import CNN, train_model
+from .experiment_result import ExperimentResult
 from .metric_collection import MetricCollection
 
 
@@ -25,6 +26,7 @@ class Experiment:
     test_loader: DataLoader
     confidence_threshold: float
     current_iteration: int
+    metrics: list[MetricCollection]
 
     def __init__(self, initial_subset_size: int = 1000, confidence_threshold: float = 0.99) -> None:
         torch.manual_seed(0)
@@ -36,16 +38,29 @@ class Experiment:
         self.train_subset = Subset(self.full_train_dataset, self.train_subset_indices)
         self.confidence_threshold = confidence_threshold
         self.current_iteration = 0
+        self.metrics = []
 
-    def run(self, number_iterations: int = 10) -> None:
+    def run(self, number_iterations: int = 10) -> ExperimentResult:
+        """
+        Run the experiment for a specified number of iterations and return the result of the
+        experiment.
+        """
         for _ in range(number_iterations):
-            model, new_train_indices = self.run_iteration()
-            if not new_train_indices:
+            should_continue = self.run_iteration()
+            if not should_continue:
                 break
-            metrics = self.evaluate_iteration(model)
-            print(metrics)
+        result = ExperimentResult(
+            confidence_threshold=self.confidence_threshold, metrics=self.metrics
+        )
+        return result
 
-    def run_iteration(self) -> tuple[CNN, list[int]]:
+    def run_iteration(self) -> bool:
+        """
+        Run a single iteration of the experiment, saving the new train data as well as evaluation
+        metrics on this Experiment instance.
+        Return whether or not any new train data was added. This will be false if the model was not
+        confident in any more out-of-sample predictions.
+        """
         self.current_iteration += 1
         train_loader = DataLoader(self.train_subset, batch_size=64, shuffle=True)
         model = train_model(train_loader)
@@ -74,11 +89,12 @@ class Experiment:
         self.train_subset = torch.utils.data.ConcatDataset([self.train_subset, new_train_data])
         new_train_indices_tensor = torch.tensor(new_train_indices)
         self.train_subset_indices = torch.cat((self.train_subset_indices, new_train_indices_tensor))
-        return model, new_train_indices
+        self._evaluate_iteration(model)
+        return len(new_train_indices) > 0
 
-    def evaluate_iteration(self, model: CNN) -> None:
+    def _evaluate_iteration(self, model: CNN) -> None:
         model.eval()
-        high_confidence_count = 0
+        high_confidence_count: int = 0
         high_confidence_predictions = []
         high_confidence_true_labels = []
         low_confidence_predictions = []
@@ -121,4 +137,5 @@ class Experiment:
             low_confidence_count=len(low_confidence_predictions),
             test_accuracy=accuracy_score(test_true_labels, test_predictions),
         )
-        return metrics
+        print(metrics)
+        self.metrics.append(metrics)
