@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
 from sklearn.metrics import accuracy_score
@@ -7,6 +9,8 @@ from torchvision import datasets, transforms
 from .cnn import CNN, train_model
 from .experiment_result import ExperimentResult
 from .metric_collection import MetricCollection
+
+Digit = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 
 def load_train_test_data() -> tuple[datasets.MNIST, datasets.MNIST]:
@@ -40,19 +44,20 @@ class Experiment:
         self.current_iteration = 0
         self.metrics = []
 
-    def run(self, number_iterations: int = 10) -> ExperimentResult:
+    def run(self, number_iterations: int = 10) -> None:
         """
-        Run the experiment for a specified number of iterations and return the result of the
-        experiment.
+        Run the experiment for a specified number of iterations.
         """
         for _ in range(number_iterations):
             should_continue = self.run_iteration()
             if not should_continue:
                 break
-        result = ExperimentResult(
-            confidence_threshold=self.confidence_threshold, metrics=self.metrics
+
+    def get_result(self) -> ExperimentResult:
+        return ExperimentResult(
+            confidence_threshold=self.confidence_threshold,
+            metrics=self.metrics,
         )
-        return result
 
     def run_iteration(self) -> bool:
         """
@@ -72,13 +77,7 @@ class Experiment:
         unlabeled_loader = DataLoader(unlabeled_subset, batch_size=64, shuffle=False)
 
         model.eval()
-        pseudo_labels = []
-        with torch.no_grad():
-            for data, _ in unlabeled_loader:
-                output = model(data)
-                probabilities = nn.functional.softmax(output, dim=1)
-                max_probs, predicted = torch.max(probabilities, 1)
-                pseudo_labels.extend(zip(predicted.tolist(), max_probs.tolist(), strict=True))
+        pseudo_labels = self._get_pseudo_labels(model, unlabeled_loader)
         # Add pseudo-labeled data to the training set based on confidence
         new_train_indices: list[int] = []
         new_train_data = []
@@ -92,13 +91,24 @@ class Experiment:
         self._evaluate_iteration(model)
         return len(new_train_indices) > 0
 
+    def _get_pseudo_labels(self, model: CNN, data_loader: DataLoader) -> list[tuple[Digit, float]]:
+        model.eval()
+        pseudo_labels: list[tuple[Digit, float]] = []
+        with torch.no_grad():
+            for data, _ in data_loader:
+                output = model(data)
+                probabilities = nn.functional.softmax(output, dim=1)
+                max_probs, predicted = torch.max(probabilities, 1)
+                pseudo_labels.extend(zip(predicted.tolist(), max_probs.tolist(), strict=True))
+        return pseudo_labels
+
     def _evaluate_iteration(self, model: CNN) -> None:
         model.eval()
         high_confidence_count: int = 0
-        high_confidence_predictions = []
-        high_confidence_true_labels = []
-        low_confidence_predictions = []
-        low_confidence_true_labels = []
+        high_confidence_predictions: list[Digit] = []
+        high_confidence_true_labels: list[Digit] = []
+        low_confidence_predictions: list[Digit] = []
+        low_confidence_true_labels: list[Digit] = []
         with torch.no_grad():
             for data, target in self.test_loader:
                 output = model(data)
@@ -112,8 +122,8 @@ class Experiment:
                     else:
                         low_confidence_predictions.append(predicted[i].item())
                         low_confidence_true_labels.append(target[i].item())
-        test_predictions = []
-        test_true_labels = []
+        test_predictions: list[Digit] = []
+        test_true_labels: list[Digit] = []
         with torch.no_grad():
             for data, target in self.test_loader:
                 output = model(data)

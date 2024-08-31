@@ -3,9 +3,10 @@ from self_training import Experiment, plot_experiment_result, save_experiment_re
 
 def main() -> None:
     experiment = Experiment(initial_subset_size=1000, confidence_threshold=0.99)
-    experiment_data = experiment.run(number_iterations=10)
-    save_experiment_result(experiment_data)
-    plot_experiment_result(experiment_data)
+    experiment.run(number_iterations=10)
+    experiment_result = experiment.get_result()
+    save_experiment_result(experiment_result)
+    plot_experiment_result(experiment_result)
 
 
 if __name__ == "__main__":
