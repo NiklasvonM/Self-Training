@@ -14,6 +14,13 @@ class CNN(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, 3, 1)
         self.fc1 = nn.Linear(9216, 128)  # Will be updated dynamically
         self.fc2 = nn.Linear(128, 10)
+        # Calculate the correct input size for fc1 dynamically
+        dummy_input = torch.randn(1, 1, 28, 28)  # MNIST images are 28x28
+        output = self.conv2(self.conv1(dummy_input))
+        output = nn.functional.max_pool2d(output, 2)
+        fc1_input_size = output.view(1, -1).size(1)
+        # Update fc1 with the correct input size
+        self.fc1 = nn.Linear(fc1_input_size, 128)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -38,11 +45,7 @@ class CNN(nn.Module):
 
 
 # See https://discuss.pytorch.org/t/normalization-in-the-mnist-example/457
-mnist_mean = 0.1307
-mnist_std = 0.3081
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((mnist_mean,), (mnist_std,))]
-)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
 
 train_dataset = datasets.MNIST("./data", train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST("./data", train=False, download=True, transform=transform)
@@ -51,30 +54,18 @@ initial_subset_size = 1000
 train_subset_indices = torch.randperm(len(train_dataset))[:initial_subset_size]
 train_subset = Subset(train_dataset, train_subset_indices)
 
-model = CNN()
-
-# Calculate the correct input size for fc1 dynamically
-dummy_input = torch.randn(1, 1, 28, 28)  # MNIST images are 28x28
-output = model.conv2(model.conv1(dummy_input))
-output = nn.functional.max_pool2d(output, 2)
-fc1_input_size = output.view(1, -1).size(1)
-
-# Update fc1 with the correct input size
-model.fc1 = nn.Linear(fc1_input_size, 128)
-
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Pseudo-labeling iterations
-num_iterations = 10
-confidence_threshold = 0.99
-out_of_sample_accuracies: list[float] = []
-train_epochs = 10
+NUM_ITERATIONS = 10
+CONFIDENCE_THRESHOLD = 0.99
 
-for iteration in range(num_iterations):
+
+def train_model(train_loader: DataLoader, train_epochs=10) -> CNN:
+    model = CNN()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     current_train_size = len(train_subset)
     print(f"Iteration {iteration + 1}: Current training size = {current_train_size}")
-    train_loader = DataLoader(train_subset, batch_size=64, shuffle=True)
     model.train()
     for _ in tqdm(range(train_epochs)):
         for data, target in train_loader:
@@ -83,7 +74,12 @@ for iteration in range(num_iterations):
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
+    return model
 
+
+for iteration in range(NUM_ITERATIONS):
+    train_loader = DataLoader(train_subset, batch_size=64, shuffle=True)
+    model = train_model(train_loader)
     # Predict on the remaining training data (unlabeled)
     unlabeled_indices = [i for i in range(len(train_dataset)) if i not in train_subset_indices]
     unlabeled_subset = Subset(train_dataset, unlabeled_indices)
@@ -102,10 +98,10 @@ for iteration in range(num_iterations):
             probabilities = nn.functional.softmax(output, dim=1)
             max_probs, predicted = torch.max(probabilities, 1)
             pseudo_labels.extend(zip(predicted.tolist(), max_probs.tolist(), strict=True))
-            high_confidence_count += (max_probs > confidence_threshold).sum().item()
+            high_confidence_count += (max_probs > CONFIDENCE_THRESHOLD).sum().item()
 
             for i in range(len(predicted)):
-                if max_probs[i] > confidence_threshold:
+                if max_probs[i] > CONFIDENCE_THRESHOLD:
                     high_confidence_predictions.append(predicted[i].item())
                     high_confidence_true_labels.append(target[i].item())
                 else:
@@ -138,7 +134,7 @@ for iteration in range(num_iterations):
     new_train_indices = []
     new_train_data = []
     for i, (pseudo_label, confidence) in enumerate(pseudo_labels):
-        if confidence > confidence_threshold:
+        if confidence > CONFIDENCE_THRESHOLD:
             new_train_data.append((unlabeled_subset[i][0], pseudo_label))
             new_train_indices.append(unlabeled_indices[i])  # Add the index
     train_subset = torch.utils.data.ConcatDataset([train_subset, new_train_data])
@@ -157,5 +153,7 @@ for iteration in range(num_iterations):
             test_true_labels.extend(target.tolist())
 
     accuracy = accuracy_score(test_true_labels, test_predictions)
-    out_of_sample_accuracies.append(accuracy)
-    print(f"Iteration {iteration + 1}: Out-of-sample accuracy = {accuracy}")
+    print(
+        f"Iteration {iteration + 1}: Out-of-sample accuracy = {accuracy} "
+        f"(n={len(test_predictions)})"
+    )
