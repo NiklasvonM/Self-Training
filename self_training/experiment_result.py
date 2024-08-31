@@ -31,9 +31,23 @@ def load_experiment_result(
     try:
         with open(filename, encoding="UTF-8") as f:
             data: dict[str, Any] = json.load(f)
-        result = ExperimentResult(**data)
+        metrics = [MetricCollection(**metric) for metric in data["metrics"]]
+        result = ExperimentResult(
+            confidence_threshold=data["confidence_threshold"], metrics=metrics
+        )
         return result
     except Exception as e:
         raise NoSavedExperimentError(
             "Failed to load metrics. Have you run the experiment and saved the metrics?"
         ) from e
+
+
+def load_all_experiment_results(folder: str | Path = "output") -> None:
+    experiment_results: list[ExperimentResult] = []
+    for filename in Path(folder).glob("*.json"):
+        try:
+            experiment_result = load_experiment_result(filename)
+            experiment_results.append(experiment_result)
+        except NoSavedExperimentError:
+            pass
+    return experiment_results

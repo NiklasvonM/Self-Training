@@ -31,6 +31,7 @@ class Experiment:
     confidence_threshold: float
     current_iteration: int
     metrics: list[MetricCollection]
+    device: torch.device
 
     def __init__(self, initial_subset_size: int = 1000, confidence_threshold: float = 0.99) -> None:
         torch.manual_seed(0)
@@ -43,6 +44,7 @@ class Experiment:
         self.confidence_threshold = confidence_threshold
         self.current_iteration = 0
         self.metrics = []
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def run(self, number_iterations: int = 10) -> None:
         """
@@ -68,7 +70,8 @@ class Experiment:
         """
         self.current_iteration += 1
         train_loader = DataLoader(self.train_subset, batch_size=64, shuffle=True)
-        model = train_model(train_loader)
+        model = train_model(train_loader, device=self.device)
+        self._evaluate_iteration(model)
         # Predict on the remaining training data (unlabeled)
         unlabeled_indices = [
             i for i in range(len(self.full_train_dataset)) if i not in self.train_subset_indices
@@ -88,7 +91,6 @@ class Experiment:
         self.train_subset = torch.utils.data.ConcatDataset([self.train_subset, new_train_data])
         new_train_indices_tensor = torch.tensor(new_train_indices)
         self.train_subset_indices = torch.cat((self.train_subset_indices, new_train_indices_tensor))
-        self._evaluate_iteration(model)
         return len(new_train_indices) > 0
 
     def _get_pseudo_labels(self, model: CNN, data_loader: DataLoader) -> list[tuple[Digit, float]]:
@@ -96,11 +98,19 @@ class Experiment:
         pseudo_labels: list[tuple[Digit, float]] = []
         with torch.no_grad():
             for data, _ in data_loader:
-                output = model(data)
+                output = model(data.to(self.device))
                 probabilities = nn.functional.softmax(output, dim=1)
                 max_probs, predicted = torch.max(probabilities, 1)
                 pseudo_labels.extend(zip(predicted.tolist(), max_probs.tolist(), strict=True))
         return pseudo_labels
+
+    def _get_unlabeled_loader(self) -> DataLoader:
+        unlabeled_indices = [
+            i for i in range(len(self.full_train_dataset)) if i not in self.train_subset_indices
+        ]
+        unlabeled_subset = Subset(self.full_train_dataset, unlabeled_indices)
+        unlabeled_loader = DataLoader(unlabeled_subset, batch_size=64, shuffle=False)
+        return unlabeled_loader
 
     def _evaluate_iteration(self, model: CNN) -> None:
         model.eval()
@@ -109,9 +119,11 @@ class Experiment:
         high_confidence_true_labels: list[Digit] = []
         low_confidence_predictions: list[Digit] = []
         low_confidence_true_labels: list[Digit] = []
+        unlabeled_loader = self._get_unlabeled_loader()
         with torch.no_grad():
-            for data, target in self.test_loader:
-                output = model(data)
+            for data, target in unlabeled_loader:
+                output = model(data.to(self.device))
+                target = target.to(self.device)
                 probabilities = nn.functional.softmax(output, dim=1)
                 max_probs, predicted = torch.max(probabilities, 1)
                 high_confidence_count += (max_probs > self.confidence_threshold).sum().item()
@@ -126,7 +138,8 @@ class Experiment:
         test_true_labels: list[Digit] = []
         with torch.no_grad():
             for data, target in self.test_loader:
-                output = model(data)
+                output = model(data.to(self.device))
+                target = target.to(self.device)
                 _, predicted = torch.max(output.data, 1)
                 test_predictions.extend(predicted.tolist())
                 test_true_labels.extend(target.tolist())

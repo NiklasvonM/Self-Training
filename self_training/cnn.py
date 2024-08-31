@@ -42,11 +42,12 @@ class CNN(nn.Module):
         return x
 
 
-def train_model(train_loader: DataLoader, train_epochs=10) -> CNN:
+def train_model(train_loader: DataLoader, device: torch.device, train_epochs=10) -> CNN:
     """
     Instantiate a fresh CNN and train it on the data in train_loader.
     """
     model = CNN()
+    model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     model.train()
     for _ in tqdm(range(train_epochs)):
