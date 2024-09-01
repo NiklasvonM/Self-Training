@@ -64,6 +64,7 @@ def plot_accuracy_improvements_per_iteration(experiment_results: list[Experiment
             iterations,
             accuracy_improvements,
             c=plt.cm.viridis(confidence_threshold),
+            alpha=0.7,
         )
     # continuous colormap for the legend
     norm = Normalize(vmin=0, vmax=1)
