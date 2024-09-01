@@ -2,6 +2,8 @@
 
 This repository implements an iterative pseudo-labeling experiment: A CNN is trained on a small initial subset of the MNIST dataset, say 1000 samples instead of the full 60000. The model then predics the labels of the remaining 59000 samples. Those data points for which the model has a high enough confidence, say above 95 %, are added to the training dataset with the predicted (as opposed to the true) labels. This process is then repeated, measuring the model's quality on the test dataset on each iteration.
 
+![process diagram](docs/process-diagram.png)
+
 ## Getting Started
 
 ### Installation
