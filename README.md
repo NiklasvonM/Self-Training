@@ -23,12 +23,15 @@ To repeatedly run experiments with random confidence thresholds, run `poetry run
 
 These scripts save their results to ./output. The results may then be plotted by the functions in `self_training.plot`, see scripts/plot_all.py.
 
-![accuracy improvement by confidence threshold](docs/accuracy-improvement-vs-threshold.png) ![accuracy improvement after the first iteration by confidence threshold](docs/accuracy-improvement-vs-threshold-second-iteration.png)
+|                                                       After the first iteration                                                        |                                  After the tenth iteration                                  |
+| :------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: |
+| ![accuracy improvement after the first iteration by confidence threshold](docs/accuracy-improvement-vs-threshold-second-iteration.png) | ![accuracy improvement by confidence threshold](docs/accuracy-improvement-vs-threshold.png) |
+
+
+|                          Accuracy on high confidence predictions                          |                         Accuracy on low confidence predictions                          |
+| :---------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: |
+| ![high confidence accuracy by iteration](docs/high-confidence-accuracy-per-iteration.png) | ![low confidence accuracy by iteration](docs/low-confidence-accuracy-per-iteration.png) |
 
 ![accuracy improvement by iteration](docs/accuracy-improvement-per-iteration.png)
-
-![high confidence accuracy by iteration](docs/high-confidence-accuracy-per-iteration.png)
-
-![low confidence accuracy by iteration](docs/low-confidence-accuracy-per-iteration.png)
 
 ![test accuracy by iteration for one experiment](docs/test-accuracy-by-iteration.png)
