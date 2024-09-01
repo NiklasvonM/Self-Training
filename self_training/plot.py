@@ -25,6 +25,7 @@ def plot_all_experiment_results(folder: str | Path = "output") -> None:
 
 
 def plot_multiple_experiment_results(experiment_results: list[ExperimentResult]) -> None:
+    experiment_results.sort(key=lambda experiment_result: experiment_result.confidence_threshold)
     confidence_thresholds = [
         experiment_result.confidence_threshold for experiment_result in experiment_results
     ]

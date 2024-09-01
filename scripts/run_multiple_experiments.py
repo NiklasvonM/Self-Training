@@ -1,13 +1,13 @@
+import random
 from datetime import datetime
-
-import numpy as np
 
 from self_training import Experiment, save_experiment_result
 
 
 def main() -> None:
-    confidence_thresholds: list[float] = reversed(np.linspace(0.2, 1.0, 10).tolist())
-    for threshold in confidence_thresholds:
+    while True:
+        threshold = random.uniform(0.0, 1.0)
+        print(f"Current threshold: {threshold}")
         experiment = Experiment(initial_subset_size=1000, confidence_threshold=threshold)
         experiment.run(number_iterations=10)
         experiment_result = experiment.get_result()
