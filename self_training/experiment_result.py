@@ -42,9 +42,13 @@ def load_experiment_result(
         ) from e
 
 
-def load_all_experiment_results(folder: str | Path = "output") -> None:
+def load_all_experiment_results(
+    folder: str | Path = "output", scan_subfolders: bool = False
+) -> None:
     experiment_results: list[ExperimentResult] = []
-    for filename in Path(folder).glob("*.json"):
+    folder = Path(folder)
+    paths = folder.rglob("*.json") if scan_subfolders else folder.glob("*.json")
+    for filename in paths:
         try:
             experiment_result = load_experiment_result(filename)
             experiment_results.append(experiment_result)
