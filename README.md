@@ -30,3 +30,5 @@ These scripts save their results to ./output. The results may then be plotted by
 ![high confidence accuracy by iteration](docs/high-confidence-accuracy-per-iteration.png)
 
 ![low confidence accuracy by iteration](docs/low-confidence-accuracy-per-iteration.png)
+
+![test accuracy by iteration for one experiment](docs/test-accuracy-by-iteration.png)
