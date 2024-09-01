@@ -76,3 +76,75 @@ def plot_accuracy_improvements_per_iteration(experiment_results: list[Experiment
     plt.ylabel("Accuracy Improvement From Previous Iteration (%pt.)")
     plt.title("Accuracy Improvements per Iteration")
     plt.show()
+
+
+def plot_high_confidence_accuracy(experiment_results: list[ExperimentResult]) -> None:
+    experiment_results.sort(key=lambda experiment_result: experiment_result.confidence_threshold)
+    _, ax = plt.subplots()
+    n_mnist_train_samples = 60000
+    for experiment_result in experiment_results:
+        confidence_threshold = experiment_result.confidence_threshold
+        metrics = experiment_result.metrics
+        data: list[tuple[int, float, float]] = [
+            (
+                i + 1,
+                metrics[i].high_confidence_accuracy * 100,
+                # Take a root so the alpha value doesn't decrease too rapidly
+                (metrics[i].high_confidence_count / n_mnist_train_samples) ** 0.2,
+            )
+            for i in range(len(metrics))
+            if metrics[i].high_confidence_accuracy is not None
+        ]
+        if not data:
+            continue
+        for i in range(len(data) - 1):
+            x = [data[i][0], data[i + 1][0]]
+            y = [data[i][1], data[i + 1][1]]
+            alpha = data[i][2]
+            plt.plot(x, y, marker="o", alpha=alpha, c=plt.cm.viridis(confidence_threshold))
+    # continuous colormap for the legend
+    norm = Normalize(vmin=0, vmax=1)
+    sm = ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+    sm.set_array([])
+    plt.grid()
+    plt.colorbar(sm, ax=ax, label="Confidence Threshold")
+    plt.xlabel("Iteration")
+    plt.ylabel("High Confidence Accuracy (%)")
+    plt.title("High Confidence Accuracy per Iteration")
+    plt.show()
+
+
+def plot_low_confidence_accuracy(experiment_results: list[ExperimentResult]) -> None:
+    experiment_results.sort(key=lambda experiment_result: experiment_result.confidence_threshold)
+    _, ax = plt.subplots()
+    n_mnist_train_samples = 60000
+    for experiment_result in experiment_results:
+        confidence_threshold = experiment_result.confidence_threshold
+        metrics = experiment_result.metrics
+        data: list[tuple[int, float, float]] = [
+            (
+                i + 1,
+                metrics[i].low_confidence_accuracy * 100,
+                # Take a root so the alpha value doesn't decrease too rapidly
+                (metrics[i].low_confidence_count / n_mnist_train_samples) ** 0.2,
+            )
+            for i in range(len(metrics))
+            if metrics[i].low_confidence_accuracy is not None
+        ]
+        if not data:
+            continue
+        for i in range(len(data) - 1):
+            x = [data[i][0], data[i + 1][0]]
+            y = [data[i][1], data[i + 1][1]]
+            alpha = data[i][2]
+            plt.plot(x, y, marker="o", alpha=alpha, c=plt.cm.viridis(confidence_threshold))
+    # continuous colormap for the legend
+    norm = Normalize(vmin=0, vmax=1)
+    sm = ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+    sm.set_array([])
+    plt.grid()
+    plt.colorbar(sm, ax=ax, label="Confidence Threshold")
+    plt.xlabel("Iteration")
+    plt.ylabel("Low Confidence Accuracy (%)")
+    plt.title("Low Confidence Accuracy per Iteration")
+    plt.show()
