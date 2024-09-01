@@ -60,15 +60,16 @@ def plot_accuracy_improvements_per_iteration(experiment_results: list[Experiment
             for i in range(len(metrics) - 1)
         ]
         iterations = list(range(2, len(metrics) + 1))
-        plt.scatter(
+        plt.plot(
             iterations,
             accuracy_improvements,
-            c=[plt.cm.viridis(confidence_threshold)] * len(iterations),
+            c=plt.cm.viridis(confidence_threshold),
         )
     # continuous colormap for the legend
     norm = Normalize(vmin=0, vmax=1)
     sm = ScalarMappable(cmap=plt.cm.viridis, norm=norm)
     sm.set_array([])
+    plt.grid()
     plt.colorbar(sm, ax=ax, label="Confidence Threshold")
     plt.xlabel("Iteration")
     plt.ylabel("Accuracy Improvement From Previous Iteration (%pt.)")
