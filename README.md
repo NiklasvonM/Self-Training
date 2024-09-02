@@ -27,7 +27,6 @@ These scripts save their results to ./output. The results may then be plotted by
 | :------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: |
 | ![accuracy improvement after the first iteration by confidence threshold](docs/accuracy-improvement-vs-threshold-second-iteration.png) | ![accuracy improvement by confidence threshold](docs/accuracy-improvement-vs-threshold.png) |
 
-
 |                          Accuracy on high confidence predictions                          |                         Accuracy on low confidence predictions                          |
 | :---------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: |
 | ![high confidence accuracy by iteration](docs/high-confidence-accuracy-per-iteration.png) | ![low confidence accuracy by iteration](docs/low-confidence-accuracy-per-iteration.png) |
