@@ -48,25 +48,40 @@ def plot_multiple_experiment_results(experiment_results: list[ExperimentResult])
     plt.show()
 
 
-def plot_accuracy_improvements_second_iteration(experiment_results: list[ExperimentResult]) -> None:
+def plot_accuracy_improvements_compared_to_first_iteration(
+    experiment_results: list[ExperimentResult],
+) -> None:
     experiment_results.sort(key=lambda experiment_result: experiment_result.confidence_threshold)
     confidence_thresholds: list[float] = []
+    iterations: list[int] = []
     accuracy_improvements: list[float] = []
     for experiment_result in experiment_results:
-        if len(experiment_result.metrics) >= 2:
+        if not len(experiment_result.metrics) >= 2:
+            continue
+        for i in range(1, len(experiment_result.metrics)):
             confidence_thresholds.append(100 * experiment_result.confidence_threshold)
             accuracy_improvements.append(
                 100
                 * (
-                    experiment_result.metrics[1].accuracy_test
+                    experiment_result.metrics[i].accuracy_test
                     - experiment_result.metrics[0].accuracy_test
                 )
             )
+            iterations.append(i + 1)
 
-    plt.scatter(confidence_thresholds, accuracy_improvements)
+    _, ax = plt.subplots()
+    # continuous colormap for the legend
+    norm = Normalize(vmin=2, vmax=max(iterations))
+    sm = ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+    sm.set_array([])
+    plt.grid()
+    plt.colorbar(sm, ax=ax, label="Iteration")
+    plt.scatter(
+        confidence_thresholds, accuracy_improvements, alpha=0.7, c=iterations, cmap="viridis"
+    )
     plt.xlabel("Confidence Threshold (%)")
     plt.ylabel("Accuracy Improvements (%pt.)")
-    plt.title("Accuracy Improvements After First Iteration vs. Confidence Threshold")
+    plt.title("Accuracy Improvements Compared to First Iteration vs. Confidence Threshold")
     plt.show()
 
 

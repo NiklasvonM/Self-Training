@@ -23,9 +23,7 @@ To repeatedly run experiments with random confidence thresholds, run `poetry run
 
 These scripts save their results to ./output. The results may then be plotted by the functions in `self_training.plot`, see scripts/plot_all.py.
 
-|                                                       After the first iteration                                                        |                                  After the tenth iteration                                  |
-| :------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: |
-| ![accuracy improvement after the first iteration by confidence threshold](docs/accuracy-improvement-vs-threshold-second-iteration.png) | ![accuracy improvement by confidence threshold](docs/accuracy-improvement-vs-threshold.png) |
+![accuracy improvement over first iteration by confidence threshold and iteration](docs/accuracy-improvement-vs-threshold-by-iteration.png)
 
 |                          Accuracy on high confidence predictions                          |                         Accuracy on low confidence predictions                          |
 | :---------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: |
