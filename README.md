@@ -37,8 +37,6 @@ These scripts save their results to ./output. The results may then be plotted by
 | :---------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: |
 | ![high confidence accuracy by iteration](docs/high-confidence-accuracy-per-iteration.png) | ![low confidence accuracy by iteration](docs/low-confidence-accuracy-per-iteration.png) |
 
-![accuracy improvement by iteration](docs/accuracy-improvement-per-iteration.png)
-
-![share of train labels that are correct by iteration](docs/share-correct-train-labels-by-iteration.png)
-
-![test accuracy by iteration for one experiment](docs/test-accuracy-by-iteration.png)
+|                                                                                                          |                                                                                             |
+| :------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: |
+| ![share of train labels that are correct by iteration](docs/share-correct-train-labels-by-iteration.png) | ![number of train data points by iteration](docs/number-train-data-points-by-iteration.png) |

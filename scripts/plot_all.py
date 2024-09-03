@@ -5,6 +5,7 @@ from self_training.plot import (
     plot_high_confidence_accuracy,
     plot_low_confidence_accuracy,
     plot_multiple_experiment_results,
+    plot_number_train_data_points,
     plot_share_correct_train_labels,
 )
 
@@ -16,3 +17,4 @@ if __name__ == "__main__":
     plot_high_confidence_accuracy(experiment_results)
     plot_low_confidence_accuracy(experiment_results)
     plot_share_correct_train_labels(experiment_results)
+    plot_number_train_data_points(experiment_results)

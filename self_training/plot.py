@@ -200,7 +200,7 @@ def plot_share_correct_train_labels(experiment_results: list[ExperimentResult]) 
         ]
         if not percentage_correct_train_labels:
             continue
-        x, y = zip(*percentage_correct_train_labels, strict=False)
+        x, y = zip(*percentage_correct_train_labels, strict=True)
         plt.plot(x, y, marker="o", c=plt.cm.viridis(confidence_threshold), alpha=0.7)
     # continuous colormap for the legend
     norm = Normalize(vmin=0, vmax=1)
@@ -209,6 +209,31 @@ def plot_share_correct_train_labels(experiment_results: list[ExperimentResult]) 
     plt.grid()
     plt.colorbar(sm, ax=ax, label="Confidence Threshold")
     plt.xlabel("Iteration")
-    plt.ylabel("Share Correct Train Labels (%)")
-    plt.title("Share Correct Train Labels per Iteration")
+    plt.ylabel("Share Correct Training Labels (%)")
+    plt.title("Share Correct Training Labels per Iteration")
+    plt.show()
+
+
+def plot_number_train_data_points(experiment_results: list[ExperimentResult]) -> None:
+    experiment_results.sort(key=lambda experiment_result: experiment_result.confidence_threshold)
+    _, ax = plt.subplots()
+    for experiment_result in experiment_results:
+        confidence_threshold = experiment_result.confidence_threshold
+        metrics = experiment_result.metrics
+        number_train_data_points: list[tuple[int, int]] = [
+            (idx + 1, metric.number_training_samples) for idx, metric in enumerate(metrics)
+        ]
+        if not number_train_data_points:
+            continue
+        x, y = zip(*number_train_data_points, strict=True)
+        plt.plot(x, y, marker="o", c=plt.cm.viridis(confidence_threshold), alpha=0.7)
+    # continuous colormap for the legend
+    norm = Normalize(vmin=0, vmax=1)
+    sm = ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+    sm.set_array([])
+    plt.grid()
+    plt.colorbar(sm, ax=ax, label="Confidence Threshold")
+    plt.xlabel("Iteration")
+    plt.ylabel("Number Training Data Points")
+    plt.title("Number Training Data Points per Iteration")
     plt.show()
