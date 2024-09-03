@@ -39,4 +39,6 @@ These scripts save their results to ./output. The results may then be plotted by
 
 ![accuracy improvement by iteration](docs/accuracy-improvement-per-iteration.png)
 
+![share of train labels that are correct by iteration](docs/share-correct-train-labels-by-iteration.png)
+
 ![test accuracy by iteration for one experiment](docs/test-accuracy-by-iteration.png)

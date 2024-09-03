@@ -185,3 +185,30 @@ def plot_low_confidence_accuracy(experiment_results: list[ExperimentResult]) -> 
     plt.ylabel("Low Confidence Accuracy (%)")
     plt.title("Low Confidence Accuracy per Iteration")
     plt.show()
+
+
+def plot_share_correct_train_labels(experiment_results: list[ExperimentResult]) -> None:
+    experiment_results.sort(key=lambda experiment_result: experiment_result.confidence_threshold)
+    _, ax = plt.subplots()
+    for experiment_result in experiment_results:
+        confidence_threshold = experiment_result.confidence_threshold
+        metrics = experiment_result.metrics
+        percentage_correct_train_labels: list[tuple[int, float]] = [
+            (idx + 1, metric.share_correct_train_labels * 100)
+            for idx, metric in enumerate(metrics)
+            if metric.share_correct_train_labels is not None
+        ]
+        if not percentage_correct_train_labels:
+            continue
+        x, y = zip(*percentage_correct_train_labels, strict=False)
+        plt.plot(x, y, marker="o", c=plt.cm.viridis(confidence_threshold), alpha=0.7)
+    # continuous colormap for the legend
+    norm = Normalize(vmin=0, vmax=1)
+    sm = ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+    sm.set_array([])
+    plt.grid()
+    plt.colorbar(sm, ax=ax, label="Confidence Threshold")
+    plt.xlabel("Iteration")
+    plt.ylabel("Share Correct Train Labels (%)")
+    plt.title("Share Correct Train Labels per Iteration")
+    plt.show()
