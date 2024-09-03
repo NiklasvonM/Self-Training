@@ -60,13 +60,6 @@ class Experiment:
             metrics=self.metrics,
         )
 
-    def run_iteration2(self) -> None:
-        self.current_iteration += 1
-        train_loader = DataLoader(self.train_subset, batch_size=64, shuffle=True)
-        model = train_model(train_loader, device=self.device)
-        self._evaluate_iteration(model)
-        # Update the training set
-
     def run_iteration(self) -> bool:
         """
         Run a single iteration of the experiment, saving the new train data as well as evaluation
